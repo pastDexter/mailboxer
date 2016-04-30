@@ -26,15 +26,15 @@ class Mailboxer::Message < Mailboxer::Notification
     self.clean if should_clean
 
     #Receiver receipts
-    temp_receipts = recipients.map { |r| build_receipt(r, 'inbox') }
+    receiver_receipts = recipients.map { |r| build_receipt(r, 'inbox') }
 
     #Sender receipt
     sender_receipt = build_receipt(sender, 'sentbox', true)
 
-    temp_receipts << sender_receipt
+    temp_receipts = [sender_receipt] + receiver_receipts
 
     if temp_receipts.all?(&:valid?)
-      Mailboxer::MailDispatcher.new(self, temp_receipts).call if send_mail
+      Mailboxer::MailDispatcher.new(self, receiver_receipts).call if send_mail
       temp_receipts.each(&:save!)
 
       conversation.touch if reply
